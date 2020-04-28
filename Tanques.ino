@@ -498,13 +498,8 @@ void loop() {
     tanque2();
     tanque3();
     tanque4();
-    tanque5();
-          
-    distance[0] = measure(trigPinTanque1, echoPinTanque1);
-    distance[1] = measure(trigPinTanque2, echoPinTanque2);
-    distance[2] = measure(trigPinTanque3, echoPinTanque3);
-    distance[3] = measure(trigPinTanque4, echoPinTanque4);
-    distance[4] = measure(trigPinTanque5, echoPinTanque5);
+    tanque5();         
+    
     for (int positionCounter = 0; positionCounter < 11; positionCounter++) 
     {
       // scroll one position left:
