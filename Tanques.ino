@@ -15,15 +15,6 @@
 const int rs = 12, en = 11, d4 = 5, d5 = 4, d6 = 3, d7 = 2;
 LiquidCrystal lcd(rs, en, d4, d5, d6, d7);
 
-const unsigned long DisplayInterval = 15000;
-unsigned long DisplayTimer;
-
-const unsigned long MeasureInterval = 15000;
-unsigned long MeasureTimer;
-
-const unsigned long UpdateReleInterval = 15000;
-unsigned long UpdateReleTimer;
-
 #define releFuro1 22
 #define releFuro2 23
 #define trigPinTanque1 25
@@ -52,13 +43,23 @@ unsigned long UpdateReleTimer;
 #define releFiltro1 47
 #define releFiltro2 48
 
-//#define BUFSIZ 75
-
+int distance[5];
 int level1;
 int level2;
 int level3;
 int level4;
 int level5;
+int aux1;
+int aux2;
+int aux3;
+int aux4;
+int aux5;
+bool flag1;
+bool flag2;
+bool flag3;
+bool flag4;
+bool flag5;
+
 File webFile;
 char *filename;
 
@@ -96,11 +97,7 @@ void setup() {
         // don't do anything more:
         return;
     }
-    Serial.println("card initialized.");*/
-    
-    DisplayTimer = millis();
-    MeasureTimer = millis();
-    UpdateReleTimer = millis();
+    Serial.println("card initialized.");*/   
     
     lcd.begin(16, 2);
     pinMode(trigPinTanque1, OUTPUT);
@@ -147,6 +144,18 @@ void setup() {
     digitalWrite(releValvula2,HIGH);
     digitalWrite(releValvula3,HIGH);      
     digitalWrite(releFuro1,HIGH);
+
+    flag1 = false;
+    flag2 = false;
+    flag3 = false;
+    flag4 = false;
+    flag5 = false;
+
+    aux1 = measure(trigPinTanque1, echoPinTanque1);
+    aux2 = measure(trigPinTanque2, echoPinTanque2);
+    aux3 = measure(trigPinTanque3, echoPinTanque3);
+    aux4 = measure(trigPinTanque4, echoPinTanque4);
+    aux5 = measure(trigPinTanque5, echoPinTanque5);
     
     lcd.print("Controle de niveis");
     delay(800);
@@ -159,7 +168,7 @@ void setup() {
     }
     delay(800);  
     lcd.clear();
-    lcd.print("Versao 3.2");
+    lcd.print("Versao 3.5");
     for (int positionCounter = 0; positionCounter < 11; positionCounter++) 
     {
       // scroll one position left:
@@ -169,7 +178,7 @@ void setup() {
     }
     delay(800);  
     lcd.clear();
-    lcd.print("Actual em 24/10/2018");
+    lcd.print("Actual em 28/04/2020");
     for (int positionCounter = 0; positionCounter < 20; positionCounter++) 
     {
       // scroll one position left:
@@ -284,33 +293,30 @@ void XML_response(EthernetClient client)
     client.print("</inputs>");
 } 
 
-int Measure(int trig, int echo)
+int measure(int trig, int echo)
 {
   Average<int> modal(10);
   int i; 
-  int distance[9];
-  float duration;
-  //Serial.println(trig);
-  //Serial.println(echo);
+  int measuring;
+  float duration; 
   for(i=0; i<10; i++)
   {
     digitalWrite(trig, LOW);
     delayMicroseconds(2);
     digitalWrite(trig, HIGH);
-    delayMicroseconds(12);
+    delayMicroseconds(20);
     digitalWrite(trig, LOW);
     duration = pulseIn(echo, HIGH);
-    distance[0] = (duration/2) / 29.1;
-    //Serial.println(distance[i]);
-    modal.push(distance[0]);    
+    measuring = (duration/2) / 29.1;    
+    modal.push(measuring);    
     delay(50);
   }
-  
-  //Serial.println(distance[0]);
+  Serial.println("Distancia medida: ");
+  Serial.println(modal.mode());
   return modal.mode();
 }
 
-void Display()
+void display()
 {
   lcd.print("Tanque 1: ");
   lcd.print(level1);
@@ -339,30 +345,174 @@ void Display()
   lcd.clear();
 }
 
-void loop() { 
-    int distance[5];
+void erroLeitura(int tanque){
+  Serial.print("Erro de leitura no tanque ");
+  Serial.println(tanque);
+  lcd.setCursor(0, 0);
+  lcd.print("Erro de leitura");
+  lcd.setCursor(0, 1);
+  lcd.print("Tanque ");
+  lcd.print(tanque);
+  delay(2000);
+}
+
+void tanque1(){ 
+  if(flag1 == true){
+    erroLeitura(1);
+    return;
+  }
+  static int count1 = 0;
+  Serial.print("Aux1: ");
+  Serial.println(aux1);
+  distance[0] = measure(trigPinTanque1, echoPinTanque1);
+  delay(1000);
+  if(aux1 + 10 < distance[0] || aux1 - 10 > distance[0]){
+    count1 = count1 + 1;
+    distance[0] = aux1;
+    Serial.print("Count1: ");
+    Serial.println(count1);
+    Serial.print("Dist1: ");
+    Serial.println(distance[0]);
+  } else{
+    aux1 = distance[0];
+    count1 = 0;
+  }
+  if(count1 >= 10){    
+    flag1 = true;
+  }
+}
+
+void tanque2(){ 
+  if(flag2 == true){
+    erroLeitura(2);
+    return;
+  }
+  static int count2 = 0;
+  Serial.print("Aux2: ");
+  Serial.println(aux2);
+  distance[1] = measure(trigPinTanque2, echoPinTanque2);
+  delay(1000);
+  if(aux2 + 10 < distance[1] || aux2 - 10 > distance[1]){
+    count2 = count2 + 1;
+    distance[1] = aux2;
+    Serial.print("Count2: ");
+    Serial.println(count2);
+    Serial.print("Dist2: ");
+    Serial.println(distance[1]);
+  } else{
+    aux2 = distance[1];
+    count2 = 0;
+  }
+  if(count2 >= 10){    
+    flag2 = true;
+  }
+}
+
+void tanque3(){ 
+  if(flag3 == true){
+    erroLeitura(3);
+    return;
+  }
+  static int count3 = 0;
+  Serial.print("Aux3: ");
+  Serial.println(aux3);
+  distance[2] = measure(trigPinTanque3, echoPinTanque3);
+  delay(1000);
+  if(aux3 + 10 < distance[2] || aux3 - 10 > distance[2]){
+    count3 = count3 + 1;
+    distance[2] = aux3;
+    Serial.print("Count3: ");
+    Serial.println(count3);
+    Serial.print("Dist3: ");
+    Serial.println(distance[2]);
+  } else{
+    aux3 = distance[2];
+    count3 = 0;
+  }
+  if(count3 >= 10){    
+    flag3 = true;
+  }
+}
+
+void tanque4(){ 
+  if(flag4 == true){
+    erroLeitura(4);
+    return;
+  }
+  static int count4 = 0;
+  Serial.print("Aux4: ");
+  Serial.println(aux4);
+  distance[3] = measure(trigPinTanque4, echoPinTanque4);
+  delay(1000);
+  if(aux4 + 10 < distance[3] || aux4 - 10 > distance[3]){
+    count4 = count4 + 1;
+    distance[3] = aux4;
+    Serial.print("Count4: ");
+    Serial.println(count4);
+    Serial.print("Dist4: ");
+    Serial.println(distance[3]);
+  } else{
+    aux4 = distance[3];
+    count4 = 0;
+  }
+  if(count4 >= 10){    
+    flag4 = true;
+  }
+}
+
+void tanque5(){ 
+  if(flag5 == true){
+    erroLeitura(5);
+    return;
+  }
+  static int count5 = 0;
+  Serial.print("Aux5: ");
+  Serial.println(aux5);
+  distance[4] = measure(trigPinTanque5, echoPinTanque5);
+  delay(1000);
+  if(aux5 + 10 < distance[4] || aux5 - 10 > distance[4]){
+    count5 = count5 + 1;
+    distance[4] = aux5;
+    Serial.print("Count5: ");
+    Serial.println(count5);
+    Serial.print("Dist5: ");
+    Serial.println(distance[4]);
+  } else{
+    aux5 = distance[4];
+    count5 = 0;
+  }
+  if(count5 >= 10){    
+    flag5 = true;
+  }
+}
+
+void loop() {   
     
-    /*Efectuar as medicoes*/
-    if ((millis() - MeasureTimer) >= MeasureInterval) {
-      lcd.setCursor(0, 0);
-      lcd.print("A Efectuar");
-      lcd.setCursor(0, 1);
-      lcd.print("Medicoes...");
-            
-      distance[0] = Measure(trigPinTanque1, echoPinTanque1);
-      distance[1] = Measure(trigPinTanque2, echoPinTanque2);
-      distance[2] = Measure(trigPinTanque3, echoPinTanque3);
-      distance[3] = Measure(trigPinTanque4, echoPinTanque4);
-      distance[4] = Measure(trigPinTanque5, echoPinTanque5);
-      for (int positionCounter = 0; positionCounter < 11; positionCounter++) 
-      {
-        // scroll one position left:
-        lcd.scrollDisplayLeft();
-        // wait a bit:
-        delay(300);
-      }
-      lcd.clear();
+    /*Efectuar as medicoes*/    
+    lcd.setCursor(0, 0);
+    lcd.print("A Efectuar");
+    lcd.setCursor(0, 1);
+    lcd.print("Medicoes...");
+
+    tanque1();
+    tanque2();
+    tanque3();
+    tanque4();
+    tanque5();
+          
+    distance[0] = measure(trigPinTanque1, echoPinTanque1);
+    distance[1] = measure(trigPinTanque2, echoPinTanque2);
+    distance[2] = measure(trigPinTanque3, echoPinTanque3);
+    distance[3] = measure(trigPinTanque4, echoPinTanque4);
+    distance[4] = measure(trigPinTanque5, echoPinTanque5);
+    for (int positionCounter = 0; positionCounter < 11; positionCounter++) 
+    {
+      // scroll one position left:
+      lcd.scrollDisplayLeft();
+      // wait a bit:
+      delay(300);
     }
+    lcd.clear(); 
     
     /*Debug das medicoes*/
     Serial.print("Tanque 1 ");
@@ -400,397 +550,395 @@ void loop() {
     digitalWrite(releValvula2,HIGH);
 
     /*Actualizaçao dos reles*/        
-    if ((millis() - UpdateReleTimer) >= UpdateReleInterval) {
-      lcd.setCursor(0, 0);
-      lcd.print("A Actualizar");
-      lcd.setCursor(0, 1);
-      lcd.print("Reles...");
-      delay(700);
-            
-      /*Reles de nivel Tanque 1*/
-      if(distance[0] <= 37){
-        digitalWrite(rele1Tanque1,HIGH);        
-      }else if(distance[0]  >= 47){
-        digitalWrite(rele1Tanque1,LOW);        
-      }
-      if(distance[0] >= 215){
-        digitalWrite(rele2Tanque1,HIGH);      
-      }else if(distance[0] <= 205){
-        digitalWrite(rele2Tanque1,LOW);
-      }
-    
-      /*Reles de nivel Tanque 2*/
-      if(distance[1] <= 37){
-        digitalWrite(rele1Tanque2,HIGH);        
-      }else if(distance[1]  >= 47){
-        digitalWrite(rele1Tanque2,LOW);        
-      }
-      if(distance[1] >= 215){
-        digitalWrite(rele2Tanque2,HIGH);
-      }else if(distance[1] <= 205){
-        digitalWrite(rele2Tanque2,LOW);
-      }
-
-      /*Reles de nivel Tanque 3*/
-      if(distance[2] <= 37){
-        digitalWrite(rele1Tanque3,HIGH);
-      }else if(distance[2]  >= 47){
-        digitalWrite(rele1Tanque3,LOW);
-      }
-      if(distance[2] >= 215){
-        digitalWrite(rele2Tanque3,HIGH);
-      }else if(distance[2] <= 205){
-        digitalWrite(rele2Tanque3,LOW);
-      }
-
-      /*Reles de nivel Tanque 4*/
-      if(distance[3] <= 47){
-        digitalWrite(rele1Tanque4,HIGH);
-      }else if(distance[3]  >= 57){
-        digitalWrite(rele1Tanque4,LOW);
-      }
-      if(distance[3] >= 230){
-        digitalWrite(rele2Tanque4,HIGH);
-      }else if(distance[3] <= 220){
-        digitalWrite(rele2Tanque4,LOW);
-      }
-
-      /*Reles de nivel Tanque 5*/
-      if(distance[4] <= 37){
-        digitalWrite(rele1Tanque5,HIGH);
-      }else if(distance[4]  >= 47){
-        digitalWrite(rele1Tanque5,LOW);
-      }
-      if(distance[4] >= 160){
-        digitalWrite(rele2Tanque5,HIGH);
-      }else if(distance[4] <= 150){
-        digitalWrite(rele2Tanque5,LOW);
-      }
-
-      /* caso 1*/
-      if(distance[0] <= 37 && distance[1] <= 37){
-          digitalWrite(releFiltro1,HIGH);
-          digitalWrite(releFiltro2,HIGH);
-          digitalWrite(releValvula1,HIGH);
-          digitalWrite(releValvula3,HIGH);      
-          digitalWrite(releFuro1,HIGH);
-      }
-      /* caso 1.1*/
-      if(distance[0] <= 37 && distance[1] > 37 && distance[1] <= 47){
-          digitalWrite(releFiltro1,HIGH);
-          digitalWrite(releFiltro2,HIGH);
-          digitalWrite(releValvula1,HIGH);
-          digitalWrite(releValvula3,HIGH);      
-          //digitalWrite(releFuro1,HIGH);
-      }
-      /* caso 1.2*/
-      if(distance[0] <= 37 && distance[1] > 47 && distance[1] <= 67){
-          digitalWrite(releFiltro1,HIGH);
-          digitalWrite(releFiltro2,HIGH);
-          //digitalWrite(releValvula1,HIGH);
-          digitalWrite(releValvula3,HIGH);      
-          digitalWrite(releFuro1,LOW);
-      }
-      /* caso 1.3*/
-      if(distance[0] <= 37 && distance[1] > 67 && distance[1] <= 215){
-          digitalWrite(releFiltro1,HIGH);                   
-          digitalWrite(releFiltro2,HIGH);          
-          digitalWrite(releValvula3,HIGH);      
-          digitalWrite(releFuro1,LOW);
-          if(distance[4] <=110){
-              digitalWrite(releValvula1,LOW);
-              delay(5000);
-              digitalWrite(releFiltro1,LOW);              
-          }
-          else{
-              digitalWrite(releFiltro1,HIGH);
-              digitalWrite(releValvula1,HIGH);
-          }
-      }
-      /* caso 1.4*/
-      if(distance[0] <= 37 && distance[1] > 215){                 
-          digitalWrite(releFiltro2,HIGH);          
-          digitalWrite(releValvula3,HIGH);      
-          digitalWrite(releFuro1,LOW);
-          if(distance[4] <=110){
-              digitalWrite(releValvula1,LOW);
-              delay(5000);
-              digitalWrite(releFiltro1,LOW);
-          }
-          else{
-              digitalWrite(releFiltro1,HIGH);
-              digitalWrite(releValvula1,HIGH);
-          }   
-      }
-      /* caso 2*/
-      if(distance[0] > 37 && distance[0] <= 47 && distance[1] <= 37){
-          //digitalWrite(releFiltro1,HIGH);
-          //digitalWrite(releFiltro2,HIGH);
-          digitalWrite(releValvula1,HIGH);
-          //digitalWrite(releValvula3,HIGH);      
-          digitalWrite(releFuro1,HIGH);
-      }
-      /* caso 2.1*/
-      if(distance[0] > 37 && distance[0] <= 47 && distance[1] > 37 && distance[1] <= 47){
-          //digitalWrite(releFiltro1,HIGH);
-          //digitalWrite(releFiltro2,HIGH);
-          //digitalWrite(releValvula1,HIGH);
-          //digitalWrite(releValvula3,HIGH);      
-          //digitalWrite(releFuro1,HIGH);
-      }
-      /* caso 2.2*/
-      if(distance[0] > 37 && distance[0] <= 47 && distance[1] > 47 && distance[1] <= 67){
-          //digitalWrite(releFiltro1,HIGH);
-          //digitalWrite(releFiltro2,HIGH);
-          //digitalWrite(releValvula1,HIGH);
-          //digitalWrite(releValvula3,HIGH);      
-          digitalWrite(releFuro1,LOW);
-      }
-      /* caso 2.3*/
-      if(distance[0] > 37 && distance[0] <= 47 && distance[1] > 67 && distance[1] <= 215){                  
-          //digitalWrite(releFiltro2,HIGH);          
-          //digitalWrite(releValvula3,HIGH);      
-          digitalWrite(releFuro1,LOW);
-          if(distance[4] <=110){
-              digitalWrite(releValvula1,LOW);
-              delay(5000);
-              digitalWrite(releFiltro1,LOW);
-          }
-          else{
-              digitalWrite(releFiltro1,HIGH);
-              digitalWrite(releValvula1,HIGH);
-          } 
-      }
-      /* caso 2.4*/
-      if(distance[0] > 37 && distance[0] <= 47 && distance[1] > 215){              
-          //digitalWrite(releFiltro2,HIGH);          
-          //digitalWrite(releValvula3,HIGH);      
-          digitalWrite(releFuro1,LOW);
-          if(distance[4] <=110){
-              digitalWrite(releValvula1,LOW);
-              delay(5000);
-              digitalWrite(releFiltro1,LOW);
-          }
-          else{
-              digitalWrite(releFiltro1,HIGH);
-              digitalWrite(releValvula1,HIGH);
-          }     
-      }
-      /* caso 3*/
-      if(distance[0] > 47 && distance[0] <= 67 && distance[1] <= 37){
-          digitalWrite(releValvula3,LOW);
-          delay(15000);
-          //digitalWrite(releFiltro2,HIGH);
-          digitalWrite(releValvula1,HIGH);          
-          digitalWrite(releFiltro1,LOW);      
-          digitalWrite(releFuro1,HIGH);
-      }
-      /* caso 3.1*/
-      if(distance[0] > 47 && distance[0] <= 67 && distance[1] > 37 && distance[1] <= 47){
-          digitalWrite(releValvula3,LOW);
-          delay(15000);
-          digitalWrite(releFiltro2,HIGH);
-          digitalWrite(releValvula1,HIGH);          
-          digitalWrite(releFiltro1,LOW);      
-          //digitalWrite(releFuro1,HIGH);
-      }
-      /* caso 3.2*/
-      if(distance[0] > 47 && distance[0] <= 67 && distance[1] > 47 && distance[1] <= 67){
-          digitalWrite(releValvula3,LOW);
-          delay(15000);
-          digitalWrite(releFiltro1,LOW);
-          //digitalWrite(releFiltro2,HIGH);
-          //digitalWrite(releValvula1,HIGH);      
-          digitalWrite(releFuro1,LOW);
-      }
-      /* caso 3.3*/
-      if(distance[0] > 47 && distance[0] <= 67 && distance[1] > 67 && distance[1] <= 215){          
-          digitalWrite(releValvula3,LOW);
-          delay(15000);          
-          digitalWrite(releFiltro1,LOW);
-          //digitalWrite(releFiltro2,HIGH);
-          digitalWrite(releFuro1,LOW);
-          if(distance[4] <=110){              
-              digitalWrite(releValvula1,LOW);
-          }
-          else{              
-              digitalWrite(releValvula1,HIGH);
-          }
-      }
-      /* caso 3.4*/
-      if(distance[0] > 47 && distance[0] <= 67 && distance[1] > 215){         
-          digitalWrite(releValvula3,LOW);
-          delay(15000);  
-          digitalWrite(releFiltro1,LOW);
-          //digitalWrite(releFiltro2,HIGH);          
-          digitalWrite(releFuro1,LOW);
-           if(distance[4] <=110){              
-              digitalWrite(releValvula1,LOW);
-          }
-          else{              
-              digitalWrite(releValvula1,HIGH);
-          }
-      }
-      /* caso 4*/
-      if(distance[0] > 67 && distance[0] <= 215 && distance[1] <= 37){          
-          digitalWrite(releValvula3,LOW);
-          delay(15000); 
-          digitalWrite(releFiltro1,LOW);          
-          digitalWrite(releValvula1,HIGH);          
-          digitalWrite(releFuro1,HIGH);
-          if(distance[4] <=110){              
-              digitalWrite(releFiltro2,LOW);
-          }
-          else{              
-              digitalWrite(releFiltro2,HIGH);
-          } 
-      }
-      /* caso 4.1*/
-      if(distance[0] > 67 && distance[0] <= 215 && distance[1] > 37 && distance[1] <= 47){          
-          digitalWrite(releValvula3,LOW);
-          delay(15000);
-          digitalWrite(releFiltro1,LOW);          
-          digitalWrite(releValvula1,HIGH);
-          digitalWrite(releFuro1,HIGH);
-          if(distance[4] <=110){              
-              digitalWrite(releFiltro2,LOW);
-          }
-          else{              
-              digitalWrite(releFiltro2,HIGH);
-          }
-      }
-      /* caso 4.2*/
-      if(distance[0] > 67 && distance[0] <= 215 && distance[1] > 47 && distance[1] <= 67){          
-          digitalWrite(releValvula3,LOW);
-          delay(15000);
-          digitalWrite(releFiltro1,LOW);          
-          //digitalWrite(releValvula1,HIGH);
-          digitalWrite(releFuro1,LOW);
-          if(distance[4] <=110){              
-              digitalWrite(releFiltro2,LOW);
-          }
-          else{              
-              digitalWrite(releFiltro2,HIGH);
-          }
-      }
-      /* caso 4.3*/
-      if(distance[0] > 67 && distance[0] <= 215 && distance[1] > 67 && distance[1] <= 215){          
-          digitalWrite(releValvula3,LOW);
-          delay(15000); 
-          digitalWrite(releFiltro1,LOW);                   
-          digitalWrite(releFuro1,LOW);
-          if(distance[4] <=110){              
-              digitalWrite(releValvula1,LOW);
-              digitalWrite(releFiltro2,LOW); 
-          }
-          else{              
-              digitalWrite(releValvula1,HIGH);
-              digitalWrite(releFiltro2,HIGH); 
-          } 
-      }
-      /* caso 4.4*/
-      if(distance[0] > 67 && distance[0] <= 215 && distance[1] > 215){          
-          digitalWrite(releValvula3,LOW);
-          delay(15000); 
-          digitalWrite(releFiltro1,LOW);                   
-          digitalWrite(releFuro1,LOW);
-          if(distance[4] <=110){              
-              digitalWrite(releValvula1,LOW);
-              digitalWrite(releFiltro2,LOW); 
-          }
-          else{              
-              digitalWrite(releValvula1,HIGH);
-              digitalWrite(releFiltro2,HIGH); 
-          } 
-      }
-      /* caso 5*/
-      if(distance[0] > 215 && distance[1] <= 37){          
-          digitalWrite(releValvula3,LOW);
-          delay(15000);
-          digitalWrite(releFiltro1,LOW);
-          digitalWrite(releFiltro2,LOW);
-          digitalWrite(releValvula1,HIGH);
-          digitalWrite(releFuro1,HIGH);
-          if(distance[4] <=110){              
-              digitalWrite(releFiltro2,LOW);
-          }
-          else{              
-              digitalWrite(releFiltro2,HIGH);
-          }
-      }
-      /* caso 5.1*/
-      if(distance[0] > 215 && distance[1] > 37 && distance[1] <= 47){        
-          digitalWrite(releValvula3,LOW);
-          delay(15000);
-          digitalWrite(releFiltro1,LOW);          
-          digitalWrite(releValvula1,HIGH);
-          digitalWrite(releFuro1,HIGH);
-          if(distance[4] <=110){              
-              digitalWrite(releFiltro2,LOW);
-          }
-          else{              
-              digitalWrite(releFiltro2,HIGH);
-          }
-      }
-      /* caso 5.2*/
-      if(distance[0] > 215 && distance[1] > 47 && distance[1] <= 67){          
-          digitalWrite(releValvula3,LOW);
-          delay(15000);
-          digitalWrite(releFiltro1,LOW);          
-          //digitalWrite(releValvula1,HIGH);
-          digitalWrite(releFuro1,LOW);
-          if(distance[4] <=110){              
-              digitalWrite(releFiltro2,LOW);
-          }
-          else{              
-              digitalWrite(releFiltro2,HIGH);
-          }
-      }
-      /* caso 5.3*/
-      if(distance[0] > 215 && distance[1] > 67 && distance[1] <= 215){            
-          digitalWrite(releValvula3,LOW);
-          delay(15000);  
-          digitalWrite(releFiltro1,LOW);   
-          digitalWrite(releFuro1,LOW);
-          if(distance[4] <=110){              
-              digitalWrite(releValvula1,LOW);
-              digitalWrite(releFiltro2,LOW);
-          }
-          else{              
-              digitalWrite(releValvula1,HIGH);
-              digitalWrite(releFiltro2,HIGH);
-          }
-      }
-      /* caso 5.4*/
-      if(distance[0] > 215 && distance[1] > 215){          
-          digitalWrite(releValvula3,LOW);
-          delay(15000);  
-          digitalWrite(releFiltro1,LOW);                    
-          digitalWrite(releFuro1,LOW);
-          if(distance[4] <=110){              
-              digitalWrite(releValvula1,LOW);
-              digitalWrite(releFiltro2,LOW);
-          }
-          else{              
-              digitalWrite(releValvula1,HIGH);
-              digitalWrite(releFiltro2,HIGH);
-          }
-      }
-      
-      for (int positionCounter = 0; positionCounter < 12; positionCounter++) 
-      {
-        // scroll one position left:
-        lcd.scrollDisplayLeft();
-        // wait a bit:
-        delay(300);
-      }
-      lcd.clear();
+   
+    lcd.setCursor(0, 0);
+    lcd.print("A Actualizar");
+    lcd.setCursor(0, 1);
+    lcd.print("Reles...");
+    delay(700);
+          
+    /*Reles de nivel Tanque 1*/
+    if(distance[0] <= 37){
+      digitalWrite(rele1Tanque1,HIGH);        
+    }else if(distance[0]  >= 47){
+      digitalWrite(rele1Tanque1,LOW);        
+    }
+    if(distance[0] >= 215){
+      digitalWrite(rele2Tanque1,HIGH);      
+    }else if(distance[0] <= 205){
+      digitalWrite(rele2Tanque1,LOW);
+    }
+  
+    /*Reles de nivel Tanque 2*/
+    if(distance[1] <= 37){
+      digitalWrite(rele1Tanque2,HIGH);        
+    }else if(distance[1]  >= 47){
+      digitalWrite(rele1Tanque2,LOW);        
+    }
+    if(distance[1] >= 205){
+      digitalWrite(rele2Tanque2,HIGH);
+    }else if(distance[1] <= 200){
+      digitalWrite(rele2Tanque2,LOW);
     }
 
-    /*Medicoes no display*/
-    if ((millis() - DisplayTimer) >= DisplayInterval) {
-      Display();
-    }   
+    /*Reles de nivel Tanque 3*/
+    if(distance[2] <= 37){
+      digitalWrite(rele1Tanque3,HIGH);
+    }else if(distance[2]  >= 47){
+      digitalWrite(rele1Tanque3,LOW);
+    }
+    if(distance[2] >= 215){
+      digitalWrite(rele2Tanque3,HIGH);
+    }else if(distance[2] <= 205){
+      digitalWrite(rele2Tanque3,LOW);
+    }
+
+    /*Reles de nivel Tanque 4*/
+    if(distance[3] <= 47){
+      digitalWrite(rele1Tanque4,HIGH);
+    }else if(distance[3]  >= 57){
+      digitalWrite(rele1Tanque4,LOW);
+    }
+    if(distance[3] >= 230){
+      digitalWrite(rele2Tanque4,HIGH);
+    }else if(distance[3] <= 220){
+      digitalWrite(rele2Tanque4,LOW);
+    }
+
+    /*Reles de nivel Tanque 5*/
+    if(distance[4] <= 37){
+      digitalWrite(rele1Tanque5,HIGH);
+    }else if(distance[4]  >= 47){
+      digitalWrite(rele1Tanque5,LOW);
+    }
+    if(distance[4] >= 160){
+      digitalWrite(rele2Tanque5,HIGH);
+    }else if(distance[4] <= 150){
+      digitalWrite(rele2Tanque5,LOW);
+    }
+
+    /* caso 1*/
+    if(distance[0] <= 37 && distance[1] <= 37){
+        digitalWrite(releFiltro1,HIGH);
+        digitalWrite(releFiltro2,HIGH);
+        digitalWrite(releValvula1,HIGH);
+        digitalWrite(releValvula3,HIGH);      
+        digitalWrite(releFuro1,HIGH);
+    }
+    /* caso 1.1*/
+    if(distance[0] <= 37 && distance[1] > 37 && distance[1] <= 47){
+        digitalWrite(releFiltro1,HIGH);
+        digitalWrite(releFiltro2,HIGH);
+        digitalWrite(releValvula1,HIGH);
+        digitalWrite(releValvula3,HIGH);      
+        //digitalWrite(releFuro1,HIGH);
+    }
+    /* caso 1.2*/
+    if(distance[0] <= 37 && distance[1] > 47 && distance[1] <= 67){
+        digitalWrite(releFiltro1,HIGH);
+        digitalWrite(releFiltro2,HIGH);
+        //digitalWrite(releValvula1,HIGH);
+        digitalWrite(releValvula3,HIGH);      
+        digitalWrite(releFuro1,LOW);
+    }
+    /* caso 1.3*/
+    if(distance[0] <= 37 && distance[1] > 67 && distance[1] <= 205){
+        digitalWrite(releFiltro1,HIGH);                   
+        digitalWrite(releFiltro2,HIGH);          
+        digitalWrite(releValvula3,HIGH);      
+        digitalWrite(releFuro1,LOW);
+        if(distance[4] <=110){
+            digitalWrite(releValvula1,LOW);
+            delay(5000);
+            digitalWrite(releFiltro1,LOW);              
+        }
+        else{
+            digitalWrite(releFiltro1,HIGH);
+            digitalWrite(releValvula1,HIGH);
+        }
+    }
+    /* caso 1.4*/
+    if(distance[0] <= 37 && distance[1] > 205){                 
+        digitalWrite(releFiltro2,HIGH);          
+        digitalWrite(releValvula3,HIGH);      
+        digitalWrite(releFuro1,LOW);
+        if(distance[4] <=110){
+            digitalWrite(releValvula1,LOW);
+            delay(5000);
+            digitalWrite(releFiltro1,LOW);
+        }
+        else{
+            digitalWrite(releFiltro1,HIGH);
+            digitalWrite(releValvula1,HIGH);
+        }   
+    }
+    /* caso 2*/
+    if(distance[0] > 37 && distance[0] <= 47 && distance[1] <= 37){
+        //digitalWrite(releFiltro1,HIGH);
+        //digitalWrite(releFiltro2,HIGH);
+        digitalWrite(releValvula1,HIGH);
+        //digitalWrite(releValvula3,HIGH);      
+        digitalWrite(releFuro1,HIGH);
+    }
+    /* caso 2.1*/
+    if(distance[0] > 37 && distance[0] <= 47 && distance[1] > 37 && distance[1] <= 47){
+        //digitalWrite(releFiltro1,HIGH);
+        //digitalWrite(releFiltro2,HIGH);
+        //digitalWrite(releValvula1,HIGH);
+        //digitalWrite(releValvula3,HIGH);      
+        //digitalWrite(releFuro1,HIGH);
+    }
+    /* caso 2.2*/
+    if(distance[0] > 37 && distance[0] <= 47 && distance[1] > 47 && distance[1] <= 67){
+        //digitalWrite(releFiltro1,HIGH);
+        //digitalWrite(releFiltro2,HIGH);
+        //digitalWrite(releValvula1,HIGH);
+        //digitalWrite(releValvula3,HIGH);      
+        digitalWrite(releFuro1,LOW);
+    }
+    /* caso 2.3*/
+    if(distance[0] > 37 && distance[0] <= 47 && distance[1] > 67 && distance[1] <= 205){                  
+        //digitalWrite(releFiltro2,HIGH);          
+        //digitalWrite(releValvula3,HIGH);      
+        digitalWrite(releFuro1,LOW);
+        if(distance[4] <=110){
+            digitalWrite(releValvula1,LOW);
+            delay(5000);
+            digitalWrite(releFiltro1,LOW);
+        }
+        else{
+            digitalWrite(releFiltro1,HIGH);
+            digitalWrite(releValvula1,HIGH);
+        } 
+    }
+    /* caso 2.4*/
+    if(distance[0] > 37 && distance[0] <= 47 && distance[1] > 205){              
+        //digitalWrite(releFiltro2,HIGH);          
+        //digitalWrite(releValvula3,HIGH);      
+        digitalWrite(releFuro1,LOW);
+        if(distance[4] <=110){
+            digitalWrite(releValvula1,LOW);
+            delay(5000);
+            digitalWrite(releFiltro1,LOW);
+        }
+        else{
+            digitalWrite(releFiltro1,HIGH);
+            digitalWrite(releValvula1,HIGH);
+        }     
+    }
+    /* caso 3*/
+    if(distance[0] > 47 && distance[0] <= 67 && distance[1] <= 37){
+        digitalWrite(releValvula3,LOW);
+        delay(15000);
+        //digitalWrite(releFiltro2,HIGH);
+        digitalWrite(releValvula1,HIGH);          
+        digitalWrite(releFiltro1,LOW);      
+        digitalWrite(releFuro1,HIGH);
+    }
+    /* caso 3.1*/
+    if(distance[0] > 47 && distance[0] <= 67 && distance[1] > 37 && distance[1] <= 47){
+        digitalWrite(releValvula3,LOW);
+        delay(15000);
+        digitalWrite(releFiltro2,HIGH);
+        digitalWrite(releValvula1,HIGH);          
+        digitalWrite(releFiltro1,LOW);      
+        //digitalWrite(releFuro1,HIGH);
+    }
+    /* caso 3.2*/
+    if(distance[0] > 47 && distance[0] <= 67 && distance[1] > 47 && distance[1] <= 67){
+        digitalWrite(releValvula3,LOW);
+        delay(15000);
+        digitalWrite(releFiltro1,LOW);
+        //digitalWrite(releFiltro2,HIGH);
+        //digitalWrite(releValvula1,HIGH);      
+        digitalWrite(releFuro1,LOW);
+    }
+    /* caso 3.3*/
+    if(distance[0] > 47 && distance[0] <= 67 && distance[1] > 67 && distance[1] <= 205){          
+        digitalWrite(releValvula3,LOW);
+        delay(15000);          
+        digitalWrite(releFiltro1,LOW);
+        //digitalWrite(releFiltro2,HIGH);
+        digitalWrite(releFuro1,LOW);
+        if(distance[4] <=110){              
+            digitalWrite(releValvula1,LOW);
+        }
+        else{              
+            digitalWrite(releValvula1,HIGH);
+        }
+    }
+    /* caso 3.4*/
+    if(distance[0] > 47 && distance[0] <= 67 && distance[1] > 205){         
+        digitalWrite(releValvula3,LOW);
+        delay(15000);  
+        digitalWrite(releFiltro1,LOW);
+        //digitalWrite(releFiltro2,HIGH);          
+        digitalWrite(releFuro1,LOW);
+         if(distance[4] <=110){              
+            digitalWrite(releValvula1,LOW);
+        }
+        else{              
+            digitalWrite(releValvula1,HIGH);
+        }
+    }
+    /* caso 4*/
+    if(distance[0] > 67 && distance[0] <= 215 && distance[1] <= 37){          
+        digitalWrite(releValvula3,LOW);
+        delay(15000); 
+        digitalWrite(releFiltro1,LOW);          
+        digitalWrite(releValvula1,HIGH);          
+        digitalWrite(releFuro1,HIGH);
+        if(distance[4] <=110){              
+            digitalWrite(releFiltro2,LOW);
+        }
+        else{              
+            digitalWrite(releFiltro2,HIGH);
+        } 
+    }
+    /* caso 4.1*/
+    if(distance[0] > 67 && distance[0] <= 215 && distance[1] > 37 && distance[1] <= 47){          
+        digitalWrite(releValvula3,LOW);
+        delay(15000);
+        digitalWrite(releFiltro1,LOW);          
+        digitalWrite(releValvula1,HIGH);
+        digitalWrite(releFuro1,HIGH);
+        if(distance[4] <=110){              
+            digitalWrite(releFiltro2,LOW);
+        }
+        else{              
+            digitalWrite(releFiltro2,HIGH);
+        }
+    }
+    /* caso 4.2*/
+    if(distance[0] > 67 && distance[0] <= 215 && distance[1] > 47 && distance[1] <= 67){          
+        digitalWrite(releValvula3,LOW);
+        delay(15000);
+        digitalWrite(releFiltro1,LOW);          
+        //digitalWrite(releValvula1,HIGH);
+        digitalWrite(releFuro1,LOW);
+        if(distance[4] <=110){              
+            digitalWrite(releFiltro2,LOW);
+        }
+        else{              
+            digitalWrite(releFiltro2,HIGH);
+        }
+    }
+    /* caso 4.3*/
+    if(distance[0] > 67 && distance[0] <= 215 && distance[1] > 67 && distance[1] <= 205){          
+        digitalWrite(releValvula3,LOW);
+        delay(15000); 
+        digitalWrite(releFiltro1,LOW);                   
+        digitalWrite(releFuro1,LOW);
+        if(distance[4] <=110){              
+            digitalWrite(releValvula1,LOW);
+            digitalWrite(releFiltro2,LOW); 
+        }
+        else{              
+            digitalWrite(releValvula1,HIGH);
+            digitalWrite(releFiltro2,HIGH); 
+        } 
+    }
+    /* caso 4.4*/
+    if(distance[0] > 67 && distance[0] <= 215 && distance[1] > 205){          
+        digitalWrite(releValvula3,LOW);
+        delay(15000); 
+        digitalWrite(releFiltro1,LOW);                   
+        digitalWrite(releFuro1,LOW);
+        if(distance[4] <=110){              
+            digitalWrite(releValvula1,LOW);
+            digitalWrite(releFiltro2,LOW); 
+        }
+        else{              
+            digitalWrite(releValvula1,HIGH);
+            digitalWrite(releFiltro2,HIGH); 
+        } 
+    }
+    /* caso 5*/
+    if(distance[0] > 215 && distance[1] <= 37){          
+        digitalWrite(releValvula3,LOW);
+        delay(15000);
+        digitalWrite(releFiltro1,LOW);
+        //digitalWrite(releFiltro2,LOW);
+        digitalWrite(releValvula1,HIGH);
+        digitalWrite(releFuro1,HIGH);
+        if(distance[4] <=110){              
+            digitalWrite(releFiltro2,LOW);
+        }
+        else{              
+            digitalWrite(releFiltro2,HIGH);
+        }
+    }
+    /* caso 5.1*/
+    if(distance[0] > 215 && distance[1] > 37 && distance[1] <= 47){        
+        digitalWrite(releValvula3,LOW);
+        delay(15000);
+        digitalWrite(releFiltro1,LOW);          
+        digitalWrite(releValvula1,HIGH);
+        digitalWrite(releFuro1,HIGH);
+        if(distance[4] <=110){              
+            digitalWrite(releFiltro2,LOW);
+        }
+        else{              
+            digitalWrite(releFiltro2,HIGH);
+        }
+    }
+    /* caso 5.2*/
+    if(distance[0] > 215 && distance[1] > 47 && distance[1] <= 67){          
+        digitalWrite(releValvula3,LOW);
+        delay(15000);
+        digitalWrite(releFiltro1,LOW);          
+        //digitalWrite(releValvula1,HIGH);
+        digitalWrite(releFuro1,LOW);
+        if(distance[4] <=110){              
+            digitalWrite(releFiltro2,LOW);
+        }
+        else{              
+            digitalWrite(releFiltro2,HIGH);
+        }
+    }
+    /* caso 5.3*/
+    if(distance[0] > 215 && distance[1] > 67 && distance[1] <= 205){            
+        digitalWrite(releValvula3,LOW);
+        delay(15000);  
+        digitalWrite(releFiltro1,LOW);   
+        digitalWrite(releFuro1,LOW);
+        if(distance[4] <=110){              
+            digitalWrite(releValvula1,LOW);
+            digitalWrite(releFiltro2,LOW);
+        }
+        else{              
+            digitalWrite(releValvula1,HIGH);
+            digitalWrite(releFiltro2,HIGH);
+        }
+    }
+    /* caso 5.4*/
+    if(distance[0] > 215 && distance[1] > 205){          
+        digitalWrite(releValvula3,LOW);
+        delay(15000);  
+        digitalWrite(releFiltro1,LOW);                    
+        digitalWrite(releFuro1,LOW);
+        if(distance[4] <=110){              
+            digitalWrite(releValvula1,LOW);
+            digitalWrite(releFiltro2,LOW);
+        }
+        else{              
+            digitalWrite(releValvula1,HIGH);
+            digitalWrite(releFiltro2,HIGH);
+        }
+    }
+    
+    for (int positionCounter = 0; positionCounter < 12; positionCounter++) 
+    {
+      // scroll one position left:
+      lcd.scrollDisplayLeft();
+      // wait a bit:
+      delay(300);
+    }
+    lcd.clear();    
+
+    /*Medicoes no display*/    
+    display();
+      
     //Conection();    
 }
 
