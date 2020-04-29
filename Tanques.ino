@@ -450,7 +450,7 @@ void tanque4(){
   if(flag4 == true){
     digitalWrite(rele1Tanque4,HIGH);
     digitalWrite(rele2Tanque4,HIGH);
-    distance[3] = 37;
+    //distance[3] = 37;
     erroLeitura(4);
     return;
   }
@@ -504,6 +504,91 @@ void tanque5(){
   }
 }
 
+void nivelTanque1(){
+    if(flag1 == true){
+      return;
+    }
+   /*Reles de nivel Tanque 1*/   
+    if(distance[0] <= 37){
+      digitalWrite(rele1Tanque1,HIGH);        
+    }else if(distance[0]  >= 47){
+      digitalWrite(rele1Tanque1,LOW);        
+    }
+    if(distance[0] >= 215){
+      digitalWrite(rele2Tanque1,HIGH);      
+    }else if(distance[0] <= 205){
+      digitalWrite(rele2Tanque1,LOW);
+    }
+}
+
+void nivelTanque2(){
+    if(flag2 == true){
+      return;
+    }
+    /*Reles de nivel Tanque 2*/
+    if(distance[1] <= 37){
+      digitalWrite(rele1Tanque2,HIGH);        
+    }else if(distance[1]  >= 47){
+      digitalWrite(rele1Tanque2,LOW);        
+    }
+    if(distance[1] >= 205){
+      digitalWrite(rele2Tanque2,HIGH);
+    }else if(distance[1] <= 200){
+      digitalWrite(rele2Tanque2,LOW);
+    }
+}
+
+void nivelTanque3(){
+    if(flag3 == true){
+      return;
+    }
+    /*Reles de nivel Tanque 3*/
+    if(distance[2] <= 37){
+      digitalWrite(rele1Tanque3,HIGH);
+    }else if(distance[2]  >= 47){
+      digitalWrite(rele1Tanque3,LOW);
+    }
+    if(distance[2] >= 215){
+      digitalWrite(rele2Tanque3,HIGH);
+    }else if(distance[2] <= 205){
+      digitalWrite(rele2Tanque3,LOW);
+    }
+}
+
+void nivelTanque4(){
+    if(flag4 == true){
+      return;
+    }
+    /*Reles de nivel Tanque 4*/
+    if(distance[3] <= 47){
+      digitalWrite(rele1Tanque4,HIGH);
+    }else if(distance[3]  >= 57){
+      digitalWrite(rele1Tanque4,LOW);
+    }
+    if(distance[3] >= 230){
+      digitalWrite(rele2Tanque4,HIGH);
+    }else if(distance[3] <= 220){
+      digitalWrite(rele2Tanque4,LOW);
+    }
+}
+
+void nivelTanque5(){
+    if(flag5 == true){
+      return;
+    }
+    /*Reles de nivel Tanque 5*/
+    if(distance[4] <= 37){
+      digitalWrite(rele1Tanque5,HIGH);
+    }else if(distance[4]  >= 47){
+      digitalWrite(rele1Tanque5,LOW);
+    }
+    if(distance[4] >= 160){
+      digitalWrite(rele2Tanque5,HIGH);
+    }else if(distance[4] <= 150){
+      digitalWrite(rele2Tanque5,LOW);
+    }
+}
+
 void loop() { 
 
     /*Verifica botão resetFlag*/
@@ -512,7 +597,11 @@ void loop() {
         flag2 = false;
         flag3 = false;
         flag4 = false;
-        flag5 = false; 
+        flag5 = false;
+        Serial.print("Reset Erro ");        
+        lcd.setCursor(0, 0);
+        lcd.print("Reset Erro ");        
+        delay(1000);
     }
     
     /*Efectuar as medicoes*/    
@@ -525,7 +614,13 @@ void loop() {
     tanque2();
     tanque3();
     tanque4();
-    tanque5();         
+    tanque5();
+
+    nivelTanque1();
+    nivelTanque2();
+    nivelTanque3();
+    nivelTanque4();
+    nivelTanque5();
     
     for (int positionCounter = 0; positionCounter < 11; positionCounter++) 
     {
@@ -579,65 +674,15 @@ void loop() {
     lcd.print("Reles...");
     delay(700);
           
-    /*Reles de nivel Tanque 1*/
-    if(distance[0] <= 37){
-      digitalWrite(rele1Tanque1,HIGH);        
-    }else if(distance[0]  >= 47){
-      digitalWrite(rele1Tanque1,LOW);        
-    }
-    if(distance[0] >= 215){
-      digitalWrite(rele2Tanque1,HIGH);      
-    }else if(distance[0] <= 205){
-      digitalWrite(rele2Tanque1,LOW);
-    }
+   
   
-    /*Reles de nivel Tanque 2*/
-    if(distance[1] <= 37){
-      digitalWrite(rele1Tanque2,HIGH);        
-    }else if(distance[1]  >= 47){
-      digitalWrite(rele1Tanque2,LOW);        
-    }
-    if(distance[1] >= 205){
-      digitalWrite(rele2Tanque2,HIGH);
-    }else if(distance[1] <= 200){
-      digitalWrite(rele2Tanque2,LOW);
-    }
+    
 
-    /*Reles de nivel Tanque 3*/
-    if(distance[2] <= 37){
-      digitalWrite(rele1Tanque3,HIGH);
-    }else if(distance[2]  >= 47){
-      digitalWrite(rele1Tanque3,LOW);
-    }
-    if(distance[2] >= 215){
-      digitalWrite(rele2Tanque3,HIGH);
-    }else if(distance[2] <= 205){
-      digitalWrite(rele2Tanque3,LOW);
-    }
+    
 
-    /*Reles de nivel Tanque 4*/
-    if(distance[3] <= 47){
-      digitalWrite(rele1Tanque4,HIGH);
-    }else if(distance[3]  >= 57){
-      digitalWrite(rele1Tanque4,LOW);
-    }
-    if(distance[3] >= 230){
-      digitalWrite(rele2Tanque4,HIGH);
-    }else if(distance[3] <= 220){
-      digitalWrite(rele2Tanque4,LOW);
-    }
+    
 
-    /*Reles de nivel Tanque 5*/
-    if(distance[4] <= 37){
-      digitalWrite(rele1Tanque5,HIGH);
-    }else if(distance[4]  >= 47){
-      digitalWrite(rele1Tanque5,LOW);
-    }
-    if(distance[4] >= 160){
-      digitalWrite(rele2Tanque5,HIGH);
-    }else if(distance[4] <= 150){
-      digitalWrite(rele2Tanque5,LOW);
-    }
+    
 
     /* caso 1*/
     if(distance[0] <= 37 && distance[1] <= 37){
