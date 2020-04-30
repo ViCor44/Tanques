@@ -321,31 +321,41 @@ int measure(int trig, int echo)
 
 void display()
 {
-  lcd.print("Tanque 1: ");
-  lcd.print(level1);
-  lcd.print("m3");
-  delay(2000);  
-  lcd.clear();
-  lcd.print("Tanque 2: ");
-  lcd.print(level2);
-  lcd.print("m3");
-  delay(2000);
-  lcd.clear();
-  lcd.print("Tanque 3: ");
-  lcd.print(level3);
-  lcd.print("m3");
-  delay(2000);
-  lcd.clear();
-  lcd.print("Tanque 4: ");
-  lcd.print(level4);
-  lcd.print("m3");
-  delay(2000);
-  lcd.clear();
-  lcd.print("Tanque 5: ");
-  lcd.print(level5);
-  lcd.print("m3");
-  delay(2000);
-  lcd.clear();
+  if(flag1 == false){
+    lcd.print("Tanque 1: ");
+    lcd.print(level1);
+    lcd.print("m3");
+    delay(2000);  
+    lcd.clear();
+  }
+  if(flag2 == false){
+    lcd.print("Tanque 2: ");
+    lcd.print(level2);
+    lcd.print("m3");
+    delay(2000);
+    lcd.clear();
+  }
+  if(flag3 == false){
+    lcd.print("Tanque 3: ");
+    lcd.print(level3);
+    lcd.print("m3");
+    delay(2000);
+    lcd.clear();
+  }
+  if(flag4 == false){
+     lcd.print("Tanque 4: ");
+    lcd.print(level4);
+    lcd.print("m3");
+    delay(2000);
+    lcd.clear();
+  }
+  if(flag5 == false){
+    lcd.print("Tanque 5: ");
+    lcd.print(level5);
+    lcd.print("m3");
+    delay(2000);
+    lcd.clear();
+  }  
 }
 
 void erroLeitura(int tanque){
