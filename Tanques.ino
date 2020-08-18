@@ -61,45 +61,9 @@ bool flag3;
 bool flag4;
 bool flag5;
 
-File webFile;
-char *filename;
-
-/************ ETHERNET STUFF ************/
-byte mac[] = { 0xDE, 0x45, 0xBE, 0xEF, 0xFE, 0xE6 };
-IPAddress ip(191,188,127, 22);
-IPAddress gateway(191,188,127,254);
-IPAddress subnet(255,255,254,0);
-EthernetServer server(8022);
-
-void HtmlHeaderOK(EthernetClient client) {
-   
-    client.println("HTTP/1.1 200 OK");
-    client.println("Content-Type: text/html");                        
-    client.println("Cache-Control: no-cache");
-    client.println("Cache-Control: no-store");
-    client.println("");
-}
-
-void HtmlHeader404(EthernetClient client) {
-    client.println("HTTP/1.1 404 Not Found");
-    client.println("Content-Type: text/xml");                        
-    client.println("");
-    client.println("<h2>File Not Found!</h2>");
-    client.println();
-}
-
 void setup() {
     Serial.begin (9600);
-    /*Ethernet.begin(mac, ip, dns, gateway, subnet);
-    server.begin();
-    // see if the card is present and can be initialized:
-    if (!SD.begin(4)) {
-        Serial.println("Card failed, or not present");
-        // don't do anything more:
-        return;
-    }
-    Serial.println("card initialized.");*/   
-    
+   
     lcd.begin(16, 2);
     pinMode(trigPinTanque1, OUTPUT);
     pinMode(echoPinTanque1, INPUT);
@@ -181,7 +145,7 @@ void setup() {
     }
     delay(800);  
     lcd.clear();
-    lcd.print("Actual em 28/04/2020");
+    lcd.print("Actual em 18/08/2020");
     for (int positionCounter = 0; positionCounter < 20; positionCounter++) 
     {
       // scroll one position left:
@@ -191,110 +155,11 @@ void setup() {
     }
     delay(1500);  
     lcd.clear();
-}
 
-void Conection(){
-    char clientline[BUFSIZ];
-    int index = 0;     
-    EthernetClient client = server.available();
-    if (client) {
-        // an http request ends with a blank line
-        boolean current_line_is_blank = true;
-       
-        // reset the input buffer
-        index = 0;       
-        while (client.connected()) {
-            if (client.available()) {
-                char c = client.read();
-           
-                // If it isn't a new line, add the character to the buffer
-                if (c != '\n' && c != '\r') {
-                    clientline[index] = c;
-                    index++;
-                    // are we too big for the buffer? start tossing out data
-                    if (index >= BUFSIZ)
-                        index = BUFSIZ -1;             
-                    // continue to read more data!
-                    continue;
-               }           
-               // got a \n or \r new line, which means the string is done
-               clientline[index] = 0;
-           
-              // Print it out for debugging
-              //Serial.println(clientline);
-           
-              // Look for substring such as a request to get the root file
-          
-              if (strstr(clientline, "ajax_inputs")) {
-                  // send rest of HTTP header
-                  client.println("HTTP/1.1 200 OK");
-                  client.println("Content-Type: text/xml");
-                  client.println("Connection: keep-alive");
-                  client.println("Cache-Control: no-cache");
-                  client.println("Cache-Control: no-store");
-                  client.println();
-                  // send XML file containing input states
-                  XML_response(client);
-               }             
-               else if (strstr(clientline, "GET /") != 0) {
-                  // this time no space after the /, so a sub-file!            
-                  filename = strtok(clientline + 5, "?"); // look after the "GET /" (5 chars) but before
-                  // the "?" if a data file has been specified. A little trick, look for the " HTTP/1.1"
-                  // string and turn the first character of the substring into a 0 to clear it out.
-                  (strstr(clientline, " HTTP"))[0] = 0;
-                  // print the file we want
-                  Serial.println(filename);
-                  File file = SD.open(filename,FILE_READ);
-                  if (!file) {
-                      HtmlHeader404(client);
-                      break;
-                  }
-            
-                  Serial.println("Opened!");                       
-                  HtmlHeaderOK(client);
-             
-                  int16_t c;
-                  while ((c = file.read()) > 0) {
-                      // uncomment the serial to debug (slow!)
-                      //Serial.print((char)c);
-                      client.print((char)c);
-                  }
-                  file.close();
-               }                
-               else {
-                  // everything else is a 404
-                  HtmlHeader404(client);
-               }
-               break;
-            }
-         }
-         // give the web browser time to receive the data
-         delay(1);
-         client.stop();
-     }
-}
+    /*valvula do tanque de alimentação da Osmose 2 sempre fechada*/
+    digitalWrite(releValvula2,HIGH);
 
-void XML_response(EthernetClient client)
-{     
-    client.print("<?xml version = \"1.0\" ?>");
-    client.print("<inputs>");
-    client.print("<tanque1>");
-    client.print(level1);
-    client.print("</tanque1>");
-    client.print("<tanque2>");
-    client.print(level2);
-    client.print("</tanque2>");
-    client.print("<tanque3>");
-    client.print(level3);
-    client.print("</tanque3>");
-    client.print("<tanque4>");
-    client.print(level4);
-    client.print("</tanque4>");
-    client.print("<tanque5>");
-    client.print(level5);
-    client.print("</tanque5>");
-    client.print("</inputs>");
-} 
+}
 
 int measure(int trig, int echo)
 {
@@ -671,30 +536,18 @@ void loop() {
     level5 = map(distance[4], 35, 231, 570, 0);  
     if (level5 < 0) {
       level5 = 0;
-    }
+    }    
     
-    /*valvula do tanque de alimentação da Osmose 2 sempre fechada*/
-    digitalWrite(releValvula2,HIGH);
-
-    /*Actualizaçao dos reles*/        
-   
+    /*Actualizaçao dos reles*/    
     lcd.setCursor(0, 0);
     lcd.print("A Actualizar");
     lcd.setCursor(0, 1);
     lcd.print("Reles...");
-    delay(700);
-          
-   
-  
-    
+    delay(700);   
 
-    
-
-    
-
-    
-
-    /* caso 1*/
+    /* caso 1
+        tanque 1 cheio. 
+        tanque 2 cheio, tudo parado*/
     if(distance[0] <= 37 && distance[1] <= 37){
         digitalWrite(releFiltro1,HIGH);
         digitalWrite(releFiltro2,HIGH);
@@ -702,7 +555,9 @@ void loop() {
         digitalWrite(releValvula3,HIGH);      
         digitalWrite(releFuro1,HIGH);
     }
-    /* caso 1.1*/
+    /* caso 1.1
+        tanque 1 cheio. 
+        tanque 2 no 1º nivel, Furo não toma qualquer ação*/
     if(distance[0] <= 37 && distance[1] > 37 && distance[1] <= 47){
         digitalWrite(releFiltro1,HIGH);
         digitalWrite(releFiltro2,HIGH);
@@ -710,17 +565,21 @@ void loop() {
         digitalWrite(releValvula3,HIGH);      
         //digitalWrite(releFuro1,HIGH);
     }
-    /* caso 1.2*/
+    /* caso 1.2
+        tanque 1 cheio. 
+        tanque 2 no 2º nivel, valvula e filtro não tomam ação*/
     if(distance[0] <= 37 && distance[1] > 47 && distance[1] <= 67){
-        digitalWrite(releFiltro1,HIGH);
+        //digitalWrite(releFiltro1,HIGH);
         digitalWrite(releFiltro2,HIGH);
         //digitalWrite(releValvula1,HIGH);
         digitalWrite(releValvula3,HIGH);      
         digitalWrite(releFuro1,LOW);
     }
-    /* caso 1.3*/
+    /* caso 1.3
+        tanque 1 cheio. 
+        tanque 2 no 3º nivel, se tanque 5 mais de meio, abre valvula e liga filtro para tanque 2*/
     if(distance[0] <= 37 && distance[1] > 67 && distance[1] <= 205){
-        digitalWrite(releFiltro1,HIGH);                   
+        //digitalWrite(releFiltro1,HIGH);                   
         digitalWrite(releFiltro2,HIGH);          
         digitalWrite(releValvula3,HIGH);      
         digitalWrite(releFuro1,LOW);
@@ -734,7 +593,9 @@ void loop() {
             digitalWrite(releValvula1,HIGH);
         }
     }
-    /* caso 1.4*/
+    /* caso 1.4
+        tanque 1 cheio. 
+        tanque 2 vazio, se tanque 5 mais de meio, abre valvula e liga filtro para tanque 2*/
     if(distance[0] <= 37 && distance[1] > 205){                 
         digitalWrite(releFiltro2,HIGH);          
         digitalWrite(releValvula3,HIGH);      
@@ -749,7 +610,9 @@ void loop() {
             digitalWrite(releValvula1,HIGH);
         }   
     }
-    /* caso 2*/
+    /* caso 2
+        tanque 1 no 1ºnivel, filtros e valvula não tomam ação. 
+        tanque 2, cheio furo parado*/
     if(distance[0] > 37 && distance[0] <= 47 && distance[1] <= 37){
         //digitalWrite(releFiltro1,HIGH);
         //digitalWrite(releFiltro2,HIGH);
@@ -757,15 +620,19 @@ void loop() {
         //digitalWrite(releValvula3,HIGH);      
         digitalWrite(releFuro1,HIGH);
     }
-    /* caso 2.1*/
+    /* caso 2.1
+        tanque 1 no 1º nivel, filtros e valvula não tomam ação. 
+        tanque 2 no 1º nivel, valvula fechada, furo não toma ação*/
     if(distance[0] > 37 && distance[0] <= 47 && distance[1] > 37 && distance[1] <= 47){
         //digitalWrite(releFiltro1,HIGH);
         //digitalWrite(releFiltro2,HIGH);
-        //digitalWrite(releValvula1,HIGH);
+        digitalWrite(releValvula1,HIGH);
         //digitalWrite(releValvula3,HIGH);      
         //digitalWrite(releFuro1,HIGH);
     }
-    /* caso 2.2*/
+    /* caso 2.2
+        tanque 1 no 1º nivel, filtros e valvula não tomam ação. 
+        tanque 2 no 2º nivel, valvula não toma ação, furo ligado*/
     if(distance[0] > 37 && distance[0] <= 47 && distance[1] > 47 && distance[1] <= 67){
         //digitalWrite(releFiltro1,HIGH);
         //digitalWrite(releFiltro2,HIGH);
@@ -773,55 +640,65 @@ void loop() {
         //digitalWrite(releValvula3,HIGH);      
         digitalWrite(releFuro1,LOW);
     }
-    /* caso 2.3*/
+    /* caso 2.3
+        tanque 1 no 1º nivel, filtros e valvula não tomam ação. 
+        tanque 2 no 3º nivel, se tanque 5 mais de meio então liga valvula e filtro*/
     if(distance[0] > 37 && distance[0] <= 47 && distance[1] > 67 && distance[1] <= 205){                  
+        //digitalWrite(releFiltro1,HIGH);
         //digitalWrite(releFiltro2,HIGH);          
         //digitalWrite(releValvula3,HIGH);      
         digitalWrite(releFuro1,LOW);
-        if(distance[4] <=110){
+        if(distance[4] <=110 && distance[1] > 67 && distance[1] <= 205){
             digitalWrite(releValvula1,LOW);
             delay(5000);
-            digitalWrite(releFiltro1,LOW);
+            digitalWrite(releFiltro1,LOW);            
         }
-        else{
-            digitalWrite(releFiltro1,HIGH);
+        else{            
             digitalWrite(releValvula1,HIGH);
         } 
     }
-    /* caso 2.4*/
+    /* caso 2.4
+        tanque 1 no 1º nivel, filtros e valvula não tomam ação. 
+        tanque 2 vazio, se tanque 5 mais de meio então liga valvula e filtro*/
     if(distance[0] > 37 && distance[0] <= 47 && distance[1] > 205){              
+        //digitalWrite(releFiltro1,HIGH);
         //digitalWrite(releFiltro2,HIGH);          
         //digitalWrite(releValvula3,HIGH);      
         digitalWrite(releFuro1,LOW);
-        if(distance[4] <=110){
+        if(distance[4] <=110 && distance[1] > 205){
             digitalWrite(releValvula1,LOW);
             delay(5000);
             digitalWrite(releFiltro1,LOW);
         }
-        else{
-            digitalWrite(releFiltro1,HIGH);
+        else{            
             digitalWrite(releValvula1,HIGH);
         }     
     }
-    /* caso 3*/
+    /* caso 3
+        tanque 1 no 2º nivel, abre valvula e liga filtro 1. 
+        tanque 2 cheio, furo e valvula desligados */
     if(distance[0] > 47 && distance[0] <= 67 && distance[1] <= 37){
         digitalWrite(releValvula3,LOW);
         delay(15000);
-        //digitalWrite(releFiltro2,HIGH);
+        digitalWrite(releFiltro1,LOW);   
+        digitalWrite(releFiltro2,HIGH);
         digitalWrite(releValvula1,HIGH);          
-        digitalWrite(releFiltro1,LOW);      
         digitalWrite(releFuro1,HIGH);
     }
-    /* caso 3.1*/
+    /* caso 3.1
+        tanque 1 no 2º nivel, abre valvula e liga filtro 1. 
+        tanque 2 no 1º nivel, furo sem ação */
     if(distance[0] > 47 && distance[0] <= 67 && distance[1] > 37 && distance[1] <= 47){
         digitalWrite(releValvula3,LOW);
         delay(15000);
+        digitalWrite(releFiltro1,LOW);
         digitalWrite(releFiltro2,HIGH);
-        digitalWrite(releValvula1,HIGH);          
-        digitalWrite(releFiltro1,LOW);      
+        digitalWrite(releValvula1,HIGH);              
         //digitalWrite(releFuro1,HIGH);
     }
-    /* caso 3.2*/
+    /* caso 3.2
+        tanque 1 no 2º nivel, abre valvula e liga filtro 1. 
+        tanque 2 no 2º nivel abre furo*/
     if(distance[0] > 47 && distance[0] <= 67 && distance[1] > 47 && distance[1] <= 67){
         digitalWrite(releValvula3,LOW);
         delay(15000);
@@ -830,77 +707,89 @@ void loop() {
         //digitalWrite(releValvula1,HIGH);      
         digitalWrite(releFuro1,LOW);
     }
-    /* caso 3.3*/
+    /* caso 3.3
+        tanque 1 no 2º nivel, abre valvula e liga filtro 1. 
+        tanque 2 no 3º nivel, se tanque 5 mais de meio, abre valvula*/
     if(distance[0] > 47 && distance[0] <= 67 && distance[1] > 67 && distance[1] <= 205){          
         digitalWrite(releValvula3,LOW);
         delay(15000);          
         digitalWrite(releFiltro1,LOW);
         //digitalWrite(releFiltro2,HIGH);
         digitalWrite(releFuro1,LOW);
-        if(distance[4] <=110){              
+        if(distance[4] <=110 && distance[1] > 67 && distance[1] <= 205){              
             digitalWrite(releValvula1,LOW);
         }
         else{              
             digitalWrite(releValvula1,HIGH);
         }
     }
-    /* caso 3.4*/
+    /* caso 3.4
+        tanque 1 no 2º nivel, abre valvula e liga filtro 1. 
+        tanque 2 vazio, se tanque 5 mais de meio, abre valvula*/
     if(distance[0] > 47 && distance[0] <= 67 && distance[1] > 205){         
         digitalWrite(releValvula3,LOW);
         delay(15000);  
         digitalWrite(releFiltro1,LOW);
         //digitalWrite(releFiltro2,HIGH);          
         digitalWrite(releFuro1,LOW);
-         if(distance[4] <=110){              
+         if(distance[4] <=110 && distance[1] > 205){              
             digitalWrite(releValvula1,LOW);
         }
         else{              
             digitalWrite(releValvula1,HIGH);
         }
     }
-    /* caso 4*/
+    /* caso 4
+        tanque 1 no 3º nivel, abre valvula e liga filtro 1, se tanque 5 mais de meio, abre filtro 2. 
+        tanque 2 cheio. */
     if(distance[0] > 67 && distance[0] <= 215 && distance[1] <= 37){          
         digitalWrite(releValvula3,LOW);
         delay(15000); 
         digitalWrite(releFiltro1,LOW);          
         digitalWrite(releValvula1,HIGH);          
         digitalWrite(releFuro1,HIGH);
-        if(distance[4] <=110){              
+        if(distance[4] <=110 && distance[0] > 67 && distance[0] <= 215){              
             digitalWrite(releFiltro2,LOW);
         }
         else{              
             digitalWrite(releFiltro2,HIGH);
         } 
     }
-    /* caso 4.1*/
+    /* caso 4.1
+        tanque 1 no 3º nivel, abre valvula e liga filtro 1, se tanque 5 mais de meio, abre filtro 2. 
+        tanque 2 no 1º nivel, furo sem ação.*/
     if(distance[0] > 67 && distance[0] <= 215 && distance[1] > 37 && distance[1] <= 47){          
         digitalWrite(releValvula3,LOW);
         delay(15000);
         digitalWrite(releFiltro1,LOW);          
         digitalWrite(releValvula1,HIGH);
-        digitalWrite(releFuro1,HIGH);
-        if(distance[4] <=110){              
+        //digitalWrite(releFuro1,HIGH);
+        if(distance[4] <=110 && distance[0] > 67 && distance[0] <= 215){              
             digitalWrite(releFiltro2,LOW);
         }
         else{              
             digitalWrite(releFiltro2,HIGH);
         }
     }
-    /* caso 4.2*/
+    /* caso 4.2
+        tanque 1 no 3º nivel, abre valvula e liga filtro 1, se tanque 5 mais de meio, abre filtro 2. 
+        tanque 2 no 2º nivel, abre furo*/
     if(distance[0] > 67 && distance[0] <= 215 && distance[1] > 47 && distance[1] <= 67){          
         digitalWrite(releValvula3,LOW);
         delay(15000);
         digitalWrite(releFiltro1,LOW);          
         //digitalWrite(releValvula1,HIGH);
         digitalWrite(releFuro1,LOW);
-        if(distance[4] <=110){              
+        if(distance[4] <=110 && distance[0] > 67 && distance[0] <= 215){              
             digitalWrite(releFiltro2,LOW);
         }
         else{              
             digitalWrite(releFiltro2,HIGH);
         }
     }
-    /* caso 4.3*/
+    /* caso 4.3
+    tanque 1 no 3º nivel, abre valvula e liga filtro 1, se tanque 5 mais de meio, abre filtro 2. 
+    tanque 2 no 3º nivel, se tanque 5 mais de meio, abre valvula*/
     if(distance[0] > 67 && distance[0] <= 215 && distance[1] > 67 && distance[1] <= 205){          
         digitalWrite(releValvula3,LOW);
         delay(15000); 
@@ -915,7 +804,9 @@ void loop() {
             digitalWrite(releFiltro2,HIGH); 
         } 
     }
-    /* caso 4.4*/
+    /* caso 4.4
+        tanque 1 no 3º nivel, abre valvula e liga filtro 1, se tanque 5 mais de meio, abre filtro 2. 
+        tanque 2 vazio, se tanque 5 mais de meio, abre valvula*/
     if(distance[0] > 67 && distance[0] <= 215 && distance[1] > 205){          
         digitalWrite(releValvula3,LOW);
         delay(15000); 
@@ -930,50 +821,57 @@ void loop() {
             digitalWrite(releFiltro2,HIGH); 
         } 
     }
-    /* caso 5*/
+    /* caso 5
+        tanque 1 vazio, se tanque 5 mais de meio, abre filtro 2.
+        tanque 2 cheio*/
     if(distance[0] > 215 && distance[1] <= 37){          
         digitalWrite(releValvula3,LOW);
         delay(15000);
-        digitalWrite(releFiltro1,LOW);
-        //digitalWrite(releFiltro2,LOW);
+        digitalWrite(releFiltro1,LOW);        
         digitalWrite(releValvula1,HIGH);
         digitalWrite(releFuro1,HIGH);
-        if(distance[4] <=110){              
+        if(distance[4] <=110 && distance[0] > 215){              
             digitalWrite(releFiltro2,LOW);
         }
         else{              
             digitalWrite(releFiltro2,HIGH);
         }
     }
-    /* caso 5.1*/
+    /* caso 5.1
+        tanque 1 vazio, se tanque 5 mais de meio, abre filtro 2.
+        tanque 2 no 1º nivel, furo sem ação*/
     if(distance[0] > 215 && distance[1] > 37 && distance[1] <= 47){        
         digitalWrite(releValvula3,LOW);
         delay(15000);
         digitalWrite(releFiltro1,LOW);          
         digitalWrite(releValvula1,HIGH);
-        digitalWrite(releFuro1,HIGH);
-        if(distance[4] <=110){              
+        //digitalWrite(releFuro1,HIGH);
+        if(distance[4] <=110 && distance[0] > 215){              
             digitalWrite(releFiltro2,LOW);
         }
         else{              
             digitalWrite(releFiltro2,HIGH);
         }
     }
-    /* caso 5.2*/
+    /* caso 5.2
+        tanque 1 vazio, se tanque 5 mais de meio, abre filtro 2.
+        tanque 2 no 2º nivel, abre furo*/
     if(distance[0] > 215 && distance[1] > 47 && distance[1] <= 67){          
         digitalWrite(releValvula3,LOW);
         delay(15000);
         digitalWrite(releFiltro1,LOW);          
         //digitalWrite(releValvula1,HIGH);
         digitalWrite(releFuro1,LOW);
-        if(distance[4] <=110){              
+        if(distance[4] <=110 && distance[0] > 215){              
             digitalWrite(releFiltro2,LOW);
         }
         else{              
             digitalWrite(releFiltro2,HIGH);
         }
     }
-    /* caso 5.3*/
+    /* caso 5.3
+        tanque 1 vazio, se tanque 5 mais de meio, abre filtro 2.
+        tanque 2 no 3º nivel, se tanque 5 mais de meio, abre valvula*/
     if(distance[0] > 215 && distance[1] > 67 && distance[1] <= 205){            
         digitalWrite(releValvula3,LOW);
         delay(15000);  
@@ -988,7 +886,9 @@ void loop() {
             digitalWrite(releFiltro2,HIGH);
         }
     }
-    /* caso 5.4*/
+    /* caso 5.4
+        tanque 1 vazio, se tanque 5 mais de meio, abre filtro 2.
+        tanque 2 vazio, se tanque 5 mais de meio, abre valvula*/
     if(distance[0] > 215 && distance[1] > 205){          
         digitalWrite(releValvula3,LOW);
         delay(15000);  
@@ -1014,9 +914,7 @@ void loop() {
     lcd.clear();    
 
     /*Medicoes no display*/    
-    display();
-      
-    //Conection();    
+    display();    
 }
 
 
